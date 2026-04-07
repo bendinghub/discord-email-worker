@@ -1,10 +1,19 @@
 export default {
   async email(message, env, ctx) {
     try {
-      // 1. Access the secret from the 'env' object.
+      // Read runtime config from Worker environment.
       const botToken = env.DISCORD_BOT_TOKEN;
       const guildId = env.DISCORD_GUILD_ID;
-      const recipientId = env.DISCORD_RECIPIENT_ID;
+
+      if (!botToken) {
+        console.error("Missing Discord config: set DISCORD_BOT_TOKEN");
+        return;
+      }
+
+      if (!guildId) {
+        console.error("Missing Discord routing config: set DISCORD_GUILD_ID");
+        return;
+      }
 
       // Extract email data
       const headers = {};
@@ -30,44 +39,35 @@ export default {
       }
       
       const discordMessage = `📧 New Email Received\n\n**From:** ${from}\n**To:** ${to}\n**Subject:** ${subject}\n\n${body}`;
-      
-      let userId = recipientId;
 
-      if (!userId) {
-        if (!guildId) {
-          console.error("Missing Discord routing config: set DISCORD_RECIPIENT_ID or DISCORD_GUILD_ID");
-          return;
+      const searchResponse = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/search?query=${encodeURIComponent(lookupName)}`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bot ${botToken}`,
+          "Content-Type": "application/json"
         }
+      });
 
-        const searchResponse = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/search?query=${encodeURIComponent(lookupName)}`, {
-          method: "GET",
-          headers: {
-            "Authorization": `Bot ${botToken}`,
-            "Content-Type": "application/json"
-          }
-        });
-
-        if (!searchResponse.ok) {
-          const error = await searchResponse.text();
-          console.error("Discord search error:", error);
-          return;
-        }
-
-        const searchData = await searchResponse.json();
-
-        if (!Array.isArray(searchData) || searchData.length === 0) {
-          console.error(`Discord member '${lookupName}' not found in guild ${guildId}`);
-          return;
-        }
-
-        const exactMatch = searchData.find((member) => {
-          const username = member.user?.username?.toLowerCase();
-          const nick = member.nick?.toLowerCase();
-          return username === lookupName.toLowerCase() || nick === lookupName.toLowerCase();
-        });
-
-        userId = exactMatch?.user?.id || searchData[0]?.user?.id;
+      if (!searchResponse.ok) {
+        const error = await searchResponse.text();
+        console.error("Discord search error:", error);
+        return;
       }
+
+      const searchData = await searchResponse.json();
+
+      if (!Array.isArray(searchData) || searchData.length === 0) {
+        console.error(`Discord member '${lookupName}' not found in guild ${guildId}`);
+        return;
+      }
+
+      const exactMatch = searchData.find((member) => {
+        const username = member.user?.username?.toLowerCase();
+        const nick = member.nick?.toLowerCase();
+        return username === lookupName.toLowerCase() || nick === lookupName.toLowerCase();
+      });
+
+      const userId = exactMatch?.user?.id || searchData[0]?.user?.id;
 
       if (!userId) {
         console.error(`Discord recipient '${lookupName}' could not be resolved`);

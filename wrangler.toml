@@ -2,6 +2,10 @@ name = "discord-email-forwarder"
 main = "index.js" # Ensure this matches your actual filename
 compatibility_date = "2024-01-01"
 
+[vars]
+# Guild-based dynamic routing from mailbox local-part.
+DISCORD_GUILD_ID = "1298327169457717328"
+
 [email]
 # This tells Cloudflare this worker handles emails
 [observability]
