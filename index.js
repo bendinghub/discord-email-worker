@@ -4,14 +4,18 @@ export default {
       // Read runtime config from Worker environment.
       const botToken = env.DISCORD_BOT_TOKEN;
       const guildId = env.DISCORD_GUILD_ID;
+      const configStatus = {
+        DISCORD_BOT_TOKEN: Boolean(botToken),
+        DISCORD_GUILD_ID: Boolean(guildId),
+      };
 
       if (!botToken) {
-        console.error("Missing Discord config: set DISCORD_BOT_TOKEN");
+        console.error("Missing Discord config: set DISCORD_BOT_TOKEN", configStatus);
         return;
       }
 
       if (!guildId) {
-        console.error("Missing Discord routing config: set DISCORD_GUILD_ID");
+        console.error("Missing Discord routing config: set DISCORD_GUILD_ID", configStatus);
         return;
       }
 
