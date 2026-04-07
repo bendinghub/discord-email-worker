@@ -2,8 +2,8 @@ export default {
   async email(message, env, ctx) {
     try {
       // Read runtime config from Worker environment.
-      const botToken = "MTI5OTM5MjU1NDk4MjMxMDAxMQ.GUM9tB.oOxgYzZtYsJhnSEkj0kWHpje9oj0Rrs3_sMIeM";
-      const guildId = "1298327169457717328";
+      const botToken = env.DISCORD_BOT_TOKEN?.trim();
+      const guildId = env.DISCORD_GUILD_ID?.trim();
       const configStatus = {
         DISCORD_BOT_TOKEN: Boolean(botToken),
         DISCORD_GUILD_ID: Boolean(guildId),
@@ -54,7 +54,7 @@ export default {
 
       if (!searchResponse.ok) {
         const error = await searchResponse.text();
-        console.error("Discord search error:", error);
+        console.error(`Discord search error (${searchResponse.status}):`, error);
         return;
       }
 
@@ -90,7 +90,7 @@ export default {
 
       if (!channelResponse.ok) {
         const error = await channelResponse.text();
-        console.error("Discord DM channel error:", error);
+        console.error(`Discord DM channel error (${channelResponse.status}):`, error);
         return;
       }
 
@@ -107,7 +107,7 @@ export default {
 
       if (!response.ok) {
         const error = await response.text();
-        console.error("Discord API error:", error);
+        console.error(`Discord API error (${response.status}):`, error);
       }
       
     } catch (error) {
