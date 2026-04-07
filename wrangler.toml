@@ -4,3 +4,7 @@ compatibility_date = "2024-01-01"
 
 [email]
 # This tells Cloudflare this worker handles emails
+[observability]
+[observability.logs]
+enabled = true
+invocation_logs = true
