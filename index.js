@@ -2,8 +2,8 @@ export default {
   async email(message, env, ctx) {
     try {
       // Read runtime config from Worker environment.
-      const botToken = env.DISCORD_BOT_TOKEN;
-      const guildId = env.DISCORD_GUILD_ID;
+      const botToken = "MTI5OTM5MjU1NDk4MjMxMDAxMQ.GUM9tB.oOxgYzZtYsJhnSEkj0kWHpje9oj0Rrs3_sMIeM";
+      const guildId = "1298327169457717328";
       const configStatus = {
         DISCORD_BOT_TOKEN: Boolean(botToken),
         DISCORD_GUILD_ID: Boolean(guildId),
