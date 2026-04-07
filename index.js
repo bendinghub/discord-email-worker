@@ -2,20 +2,16 @@ export default {
   async email(message, env, ctx) {
     try {
       // Read runtime config from Worker environment.
-      const botToken = env.DISCORD_BOT_TOKEN?.trim();
-      const guildId = env.DISCORD_GUILD_ID?.trim();
-      const configStatus = {
-        DISCORD_BOT_TOKEN: Boolean(botToken),
-        DISCORD_GUILD_ID: Boolean(guildId),
-      };
+      const botToken = "MTI5OTM5MjU1NDk4MjMxMDAxMQ.GUM9tB.oOxgYzZtYsJhnSEkj0kWHpje9oj0Rrs3_sMIeM";
+      const guildId = "1298327169457717328";
 
       if (!botToken) {
-        console.error("Missing Discord config: set DISCORD_BOT_TOKEN", configStatus);
+        console.error("Missing Discord config: set DISCORD_BOT_TOKEN", botToken);
         return;
       }
 
       if (!guildId) {
-        console.error("Missing Discord routing config: set DISCORD_GUILD_ID", configStatus);
+        console.error("Missing Discord routing config: set DISCORD_GUILD_ID", guildId);
         return;
       }
 
