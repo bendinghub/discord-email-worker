@@ -1,10 +1,10 @@
 export default {
   async email(message, env, ctx) {
     try {
-      // 1. Access the secret from the 'env' object
-      // Make sure the name 'DISCORD_BOT_TOKEN' matches exactly what you 
-      // set in the Cloudflare Dashboard or via Wrangler.
+      // 1. Access the secret from the 'env' object.
       const botToken = env.DISCORD_BOT_TOKEN;
+      const guildId = env.DISCORD_GUILD_ID;
+      const recipientId = env.DISCORD_RECIPIENT_ID;
 
       // Extract email data
       const headers = {};
@@ -15,6 +15,7 @@ export default {
       const from = message.from?.address || "unknown";
       const subject = headers.subject || "(no subject)";
       const to = message.to?.[0]?.address || "unknown";
+      const lookupName = to.split("@")[0];
       
       let body = "";
       try {
@@ -28,47 +29,78 @@ export default {
         }
       }
       
-      const discordUsername = from.split('@')[0];
-      
       const discordMessage = `📧 New Email Received\n\n**From:** ${from}\n**To:** ${to}\n**Subject:** ${subject}\n\n${body}`;
       
-      // 2. Use the token in the search request
-      const searchResponse = await fetch("https://discord.com/api/v10/users/@me/search?q=" + encodeURIComponent(discordUsername), {
-        method: "GET",
-        headers: {
-          "Authorization": `Bot ${botToken}`,
-          "Content-Type": "application/json"
+      let userId = recipientId;
+
+      if (!userId) {
+        if (!guildId) {
+          console.error("Missing Discord routing config: set DISCORD_RECIPIENT_ID or DISCORD_GUILD_ID");
+          return;
         }
-      });
-      
-      if (!searchResponse.ok) {
-        const error = await searchResponse.text();
-        console.error("Discord search error:", error);
+
+        const searchResponse = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/search?query=${encodeURIComponent(lookupName)}`, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bot ${botToken}`,
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (!searchResponse.ok) {
+          const error = await searchResponse.text();
+          console.error("Discord search error:", error);
+          return;
+        }
+
+        const searchData = await searchResponse.json();
+
+        if (!Array.isArray(searchData) || searchData.length === 0) {
+          console.error(`Discord member '${lookupName}' not found in guild ${guildId}`);
+          return;
+        }
+
+        const exactMatch = searchData.find((member) => {
+          const username = member.user?.username?.toLowerCase();
+          const nick = member.nick?.toLowerCase();
+          return username === lookupName.toLowerCase() || nick === lookupName.toLowerCase();
+        });
+
+        userId = exactMatch?.user?.id || searchData[0]?.user?.id;
+      }
+
+      if (!userId) {
+        console.error(`Discord recipient '${lookupName}' could not be resolved`);
         return; // Emails don't have "success" returns, they just finish or throw
       }
-      
-      const searchData = await searchResponse.json();
-      
-      if (!searchData.members || searchData.members.length === 0) {
-        console.error(`Discord user '${discordUsername}' not found`);
-        return;
-      }
-      
-      const userId = searchData.members[0].user.id;
-      
-      // 3. Use the token in the message request
-      const response = await fetch("https://discord.com/api/v10/users/@me/messages", {
+
+      // 2. Create a DM channel and send the message.
+      const channelResponse = await fetch("https://discord.com/api/v10/users/@me/channels", {
         method: "POST",
         headers: {
           "Authorization": `Bot ${botToken}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          recipient_id: userId,
-          content: discordMessage
-        })
+        body: JSON.stringify({ recipient_id: userId })
       });
-      
+
+      if (!channelResponse.ok) {
+        const error = await channelResponse.text();
+        console.error("Discord DM channel error:", error);
+        return;
+      }
+
+      const channelData = await channelResponse.json();
+
+      const response = await fetch(`https://discord.com/api/v10/channels/${channelData.id}/messages`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bot ${botToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ content: discordMessage })
+      });
+
       if (!response.ok) {
         const error = await response.text();
         console.error("Discord API error:", error);
