@@ -1,0 +1,7 @@
+{
+  "name": "discord-email-forwarder",
+  "main": "index.js",
+  "devDependencies": {
+    "wrangler": "latest"
+  }
+}
