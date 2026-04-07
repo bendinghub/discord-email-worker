@@ -1,11 +1,6 @@
-#:schema https://raw.githubusercontent.com/cloudflare/wrangler2/robot-schema/wrangler.toml
 name = "discord-email-forwarder"
-main = "index.js"
-compatibility_date = "2026-04-07"
+main = "index.js" # Ensure this matches your actual filename
+compatibility_date = "2024-01-01"
 
-# Enables the Worker to receive and process emails
-[email_receiver]
-
-[vars]
-# You can leave this empty since you've set the secret in the UI. 
-# The Worker will automatically find DISCORD_BOT_TOKEN in the 'env' object.
+[email]
+# This tells Cloudflare this worker handles emails
