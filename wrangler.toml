@@ -1,4 +1,4 @@
-name = "discord-email-forwarder"
+name = "discord-email-worker"
 main = "index.js" # Ensure this matches your actual filename
 compatibility_date = "2024-01-01"
 [email]
